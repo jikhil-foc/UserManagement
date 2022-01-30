@@ -1,12 +1,18 @@
 const { userList } = require("../data/userData");
+const bcrypt = require("bcrypt");
 
-exports.addUser = (req, res) => {
-  const { name, age, email } = req.body;
+exports.addUser = async (req, res) => {
+  const { name, age, email, password } = req.body;
+  const salt = await bcrypt.genSalt(10);
+
+  const encryptPassword = await bcrypt.hash(password, salt);
   const userData = {
     id: new Date().getTime().toString(36),
     name,
     age,
     email,
+    password: encryptPassword,
+    salt,
   };
 
   userList.push(userData);
