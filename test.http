@@ -6,7 +6,21 @@ POST http://localhost:3000/api/users
 content-type: application/json
 
 {
-    "name": "akhil",
-    "email": "akhil@vjvfc.com",
-    "password":"akhil"
+    "name": "jikhil",
+    "email": "jikhil@vjvfc.com",
+    "password":"jikhil"
+}
+
+
+###
+
+GET http://localhost:3000/api/users/2
+
+###
+
+PUT  http://localhost:3000/api/users/2
+content-type: application/json
+
+{
+    "name": "jikhilPs",
 }

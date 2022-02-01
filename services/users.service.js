@@ -1,36 +1,48 @@
-const { userList } = require("../data/userData");
 const bcrypt = require("bcrypt");
+const User = require("../data/userData");
+const Op = require("sequelize").Op;
 
 exports.addUser = async (req, res) => {
-  const { name, age, email, password } = req.body;
-  const salt = await bcrypt.genSalt(10);
+  const { name, email, password } = req.body;
 
+  const emailExist = await User.findOne({ where: { email } });
+
+  // checking Email Already Exist
+  if (emailExist) {
+    return res.status(409).json({ message: "User with email already exists!" });
+  }
+
+  const salt = await bcrypt.genSalt(10);
   const encryptPassword = await bcrypt.hash(password, salt);
   const userData = {
-    id: new Date().getTime().toString(36),
     name,
-    age,
     email,
     password: encryptPassword,
     salt,
   };
 
-  userList.push(userData);
+  const newUser = new User(userData);
+  const savedUser = await newUser.save().catch((err) => {
+    console.log("Error: ", err);
+    res.status(500).json({ error: "Cannot register user at the moment!" });
+  });
+
+  if (savedUser)
+    res.json({
+      message: "User Created Successfully",
+    });
+};
+
+exports.getAllUsers = async (req, res) => {
+  const usersList = await User.findAll();
   res.json({
-    message: "User Created Successfully",
-    data: userData,
+    usersList,
   });
 };
 
-exports.getAllUsers = (req, res) => {
-  res.json({
-    userList,
-  });
-};
-
-exports.getUserDetailWithId = (req, res) => {
+exports.getUserDetailWithId = async (req, res) => {
   const id = req.params.id;
-  const singleUser = userList.find((user) => user.id == id);
+  const singleUser = await User.findByPk(id);
   if (!singleUser) {
     return res.status(404).json({ message: "No User Found with Id " + id });
   }
@@ -39,33 +51,36 @@ exports.getUserDetailWithId = (req, res) => {
   });
 };
 
-exports.updateUser = (req, res) => {
+exports.updateUser = async (req, res) => {
   const id = req.params.id;
   const { name, email } = req.body;
-  const isUserExist = userList.some((user) => user.id == id);
-  if (!isUserExist) {
-    return res.status(404).json({ message: "No User Found" });
+
+  // checking Email Already Exist
+  const emailExist = await User.findOne({
+    where: { email, id: { [Op.ne]: id } },
+  });
+
+  if (emailExist) {
+    return res.status(409).json({ message: " Email already exists!" });
   }
-  userList.forEach((user) => {
-    if (user.id == id) {
-      user.name = name ? name : user.name;
-      user.email = email ? email : user.email;
-      return res.json({ msg: "User updated", user });
+
+  const result = await User.update({ name, email }, { where: { id } }).catch(
+    (err) => {
+      console.log("Error: ", err);
+      res.status(500).json({ error: "Cannot register user at the moment!" });
     }
+  );
+
+  res.json({
+    message: "User Updated Successfully",
   });
 };
 
-exports.deleteUser = (req, res) => {
+exports.deleteUser = async (req, res) => {
   const id = req.params.id;
-  const isUserExist = userList.some((user) => user.id === id);
-  if (isUserExist) {
-    const index = userList.findIndex((user) => user.id == id);
-    userList.splice(index, 1);
 
-    res.json({
-      msg: "User deleted successfully",
-    });
-  } else {
-    res.status(404).json({ message: "No User Found" });
-  }
+  const result = await User.destroy({ where: { id } });
+  res.json({
+    message: "User deleted successfully",
+  });
 };
