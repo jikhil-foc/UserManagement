@@ -1,4 +1,5 @@
 const express = require("express");
+
 const {
   getAllUsers,
   addUser,
@@ -6,6 +7,8 @@ const {
   updateUser,
   deleteUser,
 } = require("../services/users.service");
+
+const passport = require("../middleware/auth");
 
 const router = express.Router();
 

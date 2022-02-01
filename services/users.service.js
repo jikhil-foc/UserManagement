@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const User = require("../data/userData");
 const Op = require("sequelize").Op;
+const jwt = require("jsonwebtoken");
 
 exports.addUser = async (req, res) => {
   const { name, email, password } = req.body;
@@ -82,5 +83,30 @@ exports.deleteUser = async (req, res) => {
   const result = await User.destroy({ where: { id } });
   res.json({
     message: "User deleted successfully",
+  });
+};
+
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ where: { email } });
+
+  if (!user) {
+    return res.status(401).json({ error: "Invalid Email or Password" });
+  }
+
+  const result = await bcrypt.compare(password, user.password);
+
+  if (!result) {
+    return res.status(401).json({ error: "Invalid Email or Password" });
+  }
+
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET
+  );
+
+  res.json({
+    token,
   });
 };
