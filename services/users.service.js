@@ -89,7 +89,9 @@ exports.deleteUser = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ where: { email } });
+  const user = await (
+    await User.findOne({ where: { email } })
+  ).get({ plain: true });
 
   if (!user) {
     return res.status(401).json({ error: "Invalid Email or Password" });
